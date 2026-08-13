@@ -21,6 +21,7 @@ cloudinary.config(
 import models
 import schemas
 from database import engine, get_db
+import auth
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -63,7 +64,7 @@ def generate_meeting_id():
     return "".join(random.choices(string.digits, k=9))
 
 @app.post("/api/meetings", response_model=schemas.MeetingResponse, status_code=status.HTTP_201_CREATED)
-def create_meeting(meeting: schemas.MeetingCreate, db: Session = Depends(get_db)):
+def create_meeting(meeting: schemas.MeetingCreate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
     new_meeting_id = generate_meeting_id()
     # Check if exists
     while db.query(models.Meeting).filter(models.Meeting.meeting_id == new_meeting_id).first():
@@ -91,10 +92,10 @@ def get_meeting(meeting_id: str, db: Session = Depends(get_db)):
     return meeting
 
 @app.get("/api/meetings", response_model=list[schemas.MeetingResponse])
-def get_meetings(skip: int = 0, limit: int = 100, status: str = None, db: Session = Depends(get_db)):
+def get_meetings(skip: int = 0, limit: int = 100, status_param: str = None, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
     query = db.query(models.Meeting)
-    if status:
-        query = query.filter(models.Meeting.status == status)
+    if status_param:
+        query = query.filter(models.Meeting.status == status_param)
     return query.order_by(models.Meeting.date.desc()).offset(skip).limit(limit).all()
 
 # Simple endpoint to check health
@@ -131,16 +132,44 @@ async def trigger_notification(payload: NotificationMessage):
         await manager.send_personal_message(notification_data, payload.user_id)
         return {"status": f"Sent to {payload.user_id}"}
 
+@app.post("/api/auth/signup", response_model=schemas.Token)
+def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    hashed_password = auth.get_password_hash(user.password)
+    user_id = "".join(random.choices(string.ascii_letters + string.digits, k=10))
+    
+    db_user = models.User(
+        user_id=user_id,
+        name=user.name,
+        email=user.email,
+        hashed_password=hashed_password
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    
+    access_token = auth.create_access_token(data={"sub": user_id})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.post("/api/auth/login", response_model=schemas.Token)
+def login(user_credentials: schemas.UserLogin, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == user_credentials.email).first()
+    if not user or not auth.verify_password(user_credentials.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token = auth.create_access_token(data={"sub": user.user_id})
+    return {"access_token": access_token, "token_type": "bearer"}
+
 @app.get("/api/users/profile", response_model=schemas.UserResponse)
-def get_profile(db: Session = Depends(get_db)):
-    user_id = "kunal"
-    user = db.query(models.User).filter(models.User.user_id == user_id).first()
-    if not user:
-        user = models.User(user_id=user_id, name="Kunal Kumar", email="kunal@example.com")
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-    return user
+def get_profile(current_user: models.User = Depends(auth.get_current_user)):
+    return current_user
 
 @app.get("/api/users", response_model=list[schemas.UserResponse])
 def get_users(db: Session = Depends(get_db)):
@@ -151,15 +180,11 @@ def get_users(db: Session = Depends(get_db)):
 async def update_profile(
     name: str = Form(...),
     photo: UploadFile = File(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
 ):
-    user_id = "kunal"
-    user = db.query(models.User).filter(models.User.user_id == user_id).first()
-    if not user:
-        user = models.User(user_id=user_id, name=name, email="kunal@example.com")
-        db.add(user)
-    else:
-        user.name = name
+    user = current_user
+    user.name = name
 
     if photo and photo.filename:
         if photo.content_type not in ["image/jpeg", "image/png", "image/gif", "image/webp"]:

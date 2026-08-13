@@ -9,6 +9,7 @@ class User(Base):
     user_id = Column(String, unique=True, index=True)
     name = Column(String)
     email = Column(String, unique=True)
+    hashed_password = Column(String)
     photo_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 

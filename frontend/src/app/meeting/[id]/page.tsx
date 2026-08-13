@@ -9,6 +9,7 @@ import {
 import Link from "next/link";
 import { getMeeting } from "@/lib/api";
 import { VideoPlayer } from "@/components/VideoPlayer";
+import { useAuth } from "@/context/AuthContext";
 
 // Configure STUN servers for WebRTC
 const rtcConfig = {
@@ -22,8 +23,10 @@ function MeetingRoomContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user } = useAuth();
+  
   const id = params?.id as string;
-  const name = searchParams?.get("name") || "Kunal Kumar";
+  const name = user?.name || searchParams?.get("name") || "Guest";
   
   // Use a stable, random user ID for this tab session
   const [userId] = useState(() => Math.random().toString(36).substring(2, 10));

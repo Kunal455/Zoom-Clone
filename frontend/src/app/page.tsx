@@ -7,9 +7,11 @@ import ScheduleMeetingModal from "@/components/ScheduleMeetingModal";
 import Link from "next/link";
 import { getMeetings } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Dashboard() {
   const router = useRouter();
+  const { user } = useAuth();
   const [isNewMeetingModalOpen, setIsNewMeetingModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [meetings, setMeetings] = useState<any[]>([]);
@@ -50,7 +52,9 @@ export default function Dashboard() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto w-full">
-      <h1 className="text-3xl font-semibold text-gray-200 mb-8 tracking-tight">Good Morning, Kunal</h1>
+      <h1 className="text-3xl font-semibold text-gray-200 mb-8 tracking-tight">
+        Good Morning{user ? `, ${user.name.split(' ')[0]}` : ''}
+      </h1>
 
       {/* Primary Action Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">

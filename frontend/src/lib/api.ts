@@ -6,6 +6,16 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
+api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
 export const createMeeting = async (title: string, duration: number = 60, is_instant: boolean = true) => {
   const response = await api.post('/meetings', {
     title,
