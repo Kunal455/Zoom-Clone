@@ -97,8 +97,8 @@ function MeetingRoomContent() {
         setLocalStream(stream);
 
         // Connect WebSocket
-        const wsBase = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/api/ws";
-        const wsUrl = `${wsBase}/meeting/${id}/${userId}`;
+        const baseWsUrl = (process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000").replace(/\/$/, '').replace(/\/api\/ws\/meeting.*$/, '');
+        const wsUrl = `${baseWsUrl}/api/ws/meeting/${id}/${userId}`;
         ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 

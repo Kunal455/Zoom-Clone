@@ -42,7 +42,8 @@ export default function Topbar() {
   // WebSocket for real-time notifications
   useEffect(() => {
     if (!user) return;
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/api/ws/notifications";
+    const baseWsUrl = (process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000").replace(/\/$/, '').replace(/\/api\/ws\/notifications$/, '');
+    const wsUrl = `${baseWsUrl}/api/ws/notifications`;
     const ws = new WebSocket(`${wsUrl}/${user.user_id}`);
 
     ws.onmessage = (event) => {
