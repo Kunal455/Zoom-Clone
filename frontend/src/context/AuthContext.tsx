@@ -72,6 +72,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/login");
   };
 
+  const isAuthRoute = pathname === "/login" || pathname === "/signup";
+  const isPublicRoute = pathname?.startsWith("/join");
+
+  // Show a loading state or nothing while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#080B11]">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // Prevent rendering protected routes if not authenticated
+  if (!user && !isAuthRoute && !isPublicRoute) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#080B11]">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
