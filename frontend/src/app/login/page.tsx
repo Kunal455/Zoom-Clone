@@ -65,7 +65,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1.5 ml-1">Email Address</label>
             <div className="relative">
@@ -75,6 +75,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 required
+                autoComplete="off"
                 className="w-full bg-[#1A1D24] border border-gray-700 text-white rounded-xl pl-11 pr-4 py-3 focus:outline-none focus:border-blue-500 transition-colors placeholder-gray-600"
                 placeholder="you@example.com"
                 value={formData.email}
@@ -92,6 +93,7 @@ export default function LoginPage() {
               <input
                 type="password"
                 required
+                autoComplete="new-password"
                 className="w-full bg-[#1A1D24] border border-gray-700 text-white rounded-xl pl-11 pr-4 py-3 focus:outline-none focus:border-blue-500 transition-colors placeholder-gray-600"
                 placeholder="••••••••"
                 value={formData.password}
