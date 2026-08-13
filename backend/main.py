@@ -30,8 +30,8 @@ app = FastAPI(title="MeetFlow API")
 # Configure CORS for Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this to the frontend URL
-    allow_credentials=True,
+    allow_origins=["*"], 
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
