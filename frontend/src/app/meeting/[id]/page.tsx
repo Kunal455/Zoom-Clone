@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { 
   Mic, MicOff, Video as VideoIcon, VideoOff, MonitorUp, 
-  Users, MessageSquare, MoreVertical, X, Loader2
+  Users, MessageSquare, MoreVertical, X, Loader2, Copy, Check
 } from "lucide-react";
 import Link from "next/link";
 import { getMeeting } from "@/lib/api";
@@ -37,6 +37,7 @@ function MeetingRoomContent() {
   const [currentTime, setCurrentTime] = useState("");
   const [meeting, setMeeting] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   // WebRTC & Media States
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -354,6 +355,18 @@ function MeetingRoomContent() {
           <div className="text-sm font-medium text-blue-500 bg-blue-500/10 px-3 py-1 rounded-md">
             {currentTime}
           </div>
+          <button 
+            onClick={() => {
+              navigator.clipboard.writeText(id);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            className="flex items-center gap-2 text-sm font-medium text-gray-400 bg-[#1A1D24] border border-gray-800 hover:bg-[#252830] hover:text-white transition-colors px-3 py-1 rounded-md"
+            title="Copy Meeting ID"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+            ID: {id}
+          </button>
         </div>
 
         <div className="flex items-center gap-3">
