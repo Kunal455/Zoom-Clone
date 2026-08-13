@@ -48,6 +48,7 @@ function MeetingRoomContent() {
 
   const wsRef = useRef<WebSocket | null>(null);
   const peersRef = useRef<Record<string, RTCPeerConnection>>({});
+  const pendingCandidates = useRef<Record<string, RTCIceCandidateInit[]>>({});
 
   // 1. Fetch meeting info
   useEffect(() => {
@@ -217,6 +218,19 @@ function MeetingRoomContent() {
     const peer = await createPeerConnection(targetUserId, currentStream, false);
     
     await peer.setRemoteDescription(new RTCSessionDescription(data.data));
+    
+    // Process queued candidates
+    if (pendingCandidates.current[targetUserId]) {
+      for (const candidate of pendingCandidates.current[targetUserId]) {
+        try {
+          await peer.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (e) {
+          console.error("Error adding queued ice candidate", e);
+        }
+      }
+      pendingCandidates.current[targetUserId] = [];
+    }
+
     const answer = await peer.createAnswer();
     await peer.setLocalDescription(answer);
     
@@ -237,9 +251,22 @@ function MeetingRoomContent() {
   };
 
   const handleAnswer = async (data: any) => {
-    const peer = peersRef.current[data.sender];
+    const targetUserId = data.sender;
+    const peer = peersRef.current[targetUserId];
     if (peer) {
       await peer.setRemoteDescription(new RTCSessionDescription(data.data));
+      
+      // Process queued candidates
+      if (pendingCandidates.current[targetUserId]) {
+        for (const candidate of pendingCandidates.current[targetUserId]) {
+          try {
+            await peer.addIceCandidate(new RTCIceCandidate(candidate));
+          } catch (e) {
+            console.error("Error adding queued ice candidate", e);
+          }
+        }
+        pendingCandidates.current[targetUserId] = [];
+      }
     }
     if (data.name) {
       setParticipants(prev => ({
@@ -250,9 +277,21 @@ function MeetingRoomContent() {
   };
 
   const handleIceCandidate = async (data: any) => {
-    const peer = peersRef.current[data.sender];
+    const targetUserId = data.sender;
+    const peer = peersRef.current[targetUserId];
     if (peer) {
-      await peer.addIceCandidate(new RTCIceCandidate(data.data));
+      if (peer.remoteDescription) {
+        try {
+          await peer.addIceCandidate(new RTCIceCandidate(data.data));
+        } catch (e) {
+          console.error("Error adding ice candidate", e);
+        }
+      } else {
+        if (!pendingCandidates.current[targetUserId]) {
+          pendingCandidates.current[targetUserId] = [];
+        }
+        pendingCandidates.current[targetUserId].push(data.data);
+      }
     }
   };
 

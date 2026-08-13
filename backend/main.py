@@ -262,7 +262,8 @@ async def meeting_websocket(websocket: WebSocket, meeting_id: str, user_id: str)
                 await meeting_manager.send_personal_message(meeting_id, target, {
                     "type": msg_type,
                     "sender": user_id,
-                    "data": data.get("data")
+                    "data": data.get("data"),
+                    "name": data.get("name")
                 })
             elif msg_type == "chat-message":
                 await meeting_manager.broadcast_to_room(meeting_id, {
@@ -277,7 +278,8 @@ async def meeting_websocket(websocket: WebSocket, meeting_id: str, user_id: str)
                     "type": "toggle-media",
                     "sender": user_id,
                     "media": data.get("media"),
-                    "state": data.get("state")
+                    "state": data.get("state"),
+                    "name": data.get("name")
                 }, exclude=user_id)
                 
     except WebSocketDisconnect:
