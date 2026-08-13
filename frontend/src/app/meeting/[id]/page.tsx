@@ -77,8 +77,15 @@ function MeetingRoomContent() {
 
     const setupMediaAndSignaling = async () => {
       try {
-        // Get local media
-        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        // Get local media with echo cancellation for clearer audio
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: true, 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          } 
+        });
         
         // Initial state is off
         stream.getVideoTracks().forEach(track => track.enabled = false);
@@ -326,6 +333,14 @@ function MeetingRoomContent() {
   const participantIds = Object.keys(remoteStreams);
   const totalParticipants = participantIds.length + 1; // +1 for local user
 
+  const getGridClass = (total: number) => {
+    if (total === 1) return "grid-cols-1 grid-rows-1";
+    if (total === 2) return "grid-cols-2 grid-rows-1";
+    if (total <= 4) return "grid-cols-2 grid-rows-2";
+    if (total <= 6) return "grid-cols-3 grid-rows-2";
+    return "grid-cols-3 grid-rows-3";
+  };
+
   return (
     <div className="h-screen bg-[#080B11] flex flex-col text-white font-sans overflow-hidden">
       
@@ -354,7 +369,7 @@ function MeetingRoomContent() {
       <main className="flex-1 flex overflow-hidden px-6 pb-24">
         
         {/* Video Grid */}
-        <div className={`flex-1 grid gap-4 ${totalParticipants === 1 ? 'grid-cols-1' : totalParticipants <= 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+        <div className={`flex-1 grid gap-4 p-4 min-h-0 w-full ${getGridClass(totalParticipants)}`}>
           
           {/* Local User */}
           <VideoPlayer 

@@ -23,7 +23,7 @@ export function VideoPlayer({ stream, isLocal = false, name, isMicOn, isVideoOn 
   const initials = name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
 
   return (
-    <div className="bg-[#12151C] rounded-2xl border border-gray-800 overflow-hidden relative group flex items-center justify-center shadow-lg w-full h-full aspect-video">
+    <div className="bg-[#12151C] rounded-2xl border border-gray-800 overflow-hidden relative group flex items-center justify-center shadow-lg w-full h-full">
       {/* Video Element */}
       {isVideoOn && stream ? (
         <video 
