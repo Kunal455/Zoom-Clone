@@ -8,6 +8,9 @@ import string
 import os
 import cloudinary
 import cloudinary.uploader
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
@@ -139,6 +142,11 @@ def get_profile(db: Session = Depends(get_db)):
         db.refresh(user)
     return user
 
+@app.get("/api/users", response_model=list[schemas.UserResponse])
+def get_users(db: Session = Depends(get_db)):
+    users = db.query(models.User).all()
+    return users
+
 @app.post("/api/users/profile", response_model=schemas.UserResponse)
 async def update_profile(
     name: str = Form(...),
@@ -170,3 +178,87 @@ async def update_profile(
     db.commit()
     db.refresh(user)
     return user
+
+# --- WEBRTC SIGNALING ---
+
+class MeetingConnectionManager:
+    def __init__(self):
+        # meeting_id -> { user_id: websocket }
+        self.rooms: dict[str, dict[str, WebSocket]] = {}
+
+    async def connect(self, websocket: WebSocket, meeting_id: str, user_id: str):
+        await websocket.accept()
+        if meeting_id not in self.rooms:
+            self.rooms[meeting_id] = {}
+        self.rooms[meeting_id][user_id] = websocket
+
+    def disconnect(self, meeting_id: str, user_id: str):
+        if meeting_id in self.rooms:
+            if user_id in self.rooms[meeting_id]:
+                del self.rooms[meeting_id][user_id]
+            if len(self.rooms[meeting_id]) == 0:
+                del self.rooms[meeting_id]
+
+    async def broadcast_to_room(self, meeting_id: str, message: dict, exclude: str = None):
+        if meeting_id in self.rooms:
+            for uid, connection in self.rooms[meeting_id].items():
+                if uid != exclude:
+                    try:
+                        await connection.send_json(message)
+                    except Exception:
+                        pass
+
+    async def send_personal_message(self, meeting_id: str, user_id: str, message: dict):
+        if meeting_id in self.rooms and user_id in self.rooms[meeting_id]:
+            try:
+                await self.rooms[meeting_id][user_id].send_json(message)
+            except Exception:
+                pass
+
+meeting_manager = MeetingConnectionManager()
+
+@app.websocket("/api/ws/meeting/{meeting_id}/{user_id}")
+async def meeting_websocket(websocket: WebSocket, meeting_id: str, user_id: str):
+    await meeting_manager.connect(websocket, meeting_id, user_id)
+    
+    # Notify others that this user joined
+    await meeting_manager.broadcast_to_room(meeting_id, {
+        "type": "user-joined",
+        "userId": user_id
+    }, exclude=user_id)
+    
+    try:
+        while True:
+            data = await websocket.receive_json()
+            msg_type = data.get("type")
+            target = data.get("target")
+            
+            if msg_type in ["offer", "answer", "ice-candidate"]:
+                await meeting_manager.send_personal_message(meeting_id, target, {
+                    "type": msg_type,
+                    "sender": user_id,
+                    "data": data.get("data")
+                })
+            elif msg_type == "chat-message":
+                await meeting_manager.broadcast_to_room(meeting_id, {
+                    "type": "chat-message",
+                    "sender": user_id,
+                    "text": data.get("text"),
+                    "senderName": data.get("senderName"),
+                    "timestamp": data.get("timestamp")
+                })
+            elif msg_type == "toggle-media":
+                await meeting_manager.broadcast_to_room(meeting_id, {
+                    "type": "toggle-media",
+                    "sender": user_id,
+                    "media": data.get("media"),
+                    "state": data.get("state")
+                }, exclude=user_id)
+                
+    except WebSocketDisconnect:
+        meeting_manager.disconnect(meeting_id, user_id)
+        await meeting_manager.broadcast_to_room(meeting_id, {
+            "type": "user-left",
+            "userId": user_id
+        })
+
