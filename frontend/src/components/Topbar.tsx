@@ -43,7 +43,7 @@ export default function Topbar() {
   useEffect(() => {
     if (!user) return;
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/api/ws/notifications";
-    const ws = new WebSocket(`${wsUrl}/${user.id}`);
+    const ws = new WebSocket(`${wsUrl}/${user.user_id}`);
 
     ws.onmessage = (event) => {
       try {
