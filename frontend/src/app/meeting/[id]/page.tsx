@@ -11,11 +11,21 @@ import { getMeeting } from "@/lib/api";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { useAuth } from "@/context/AuthContext";
 
-// Configure STUN servers for WebRTC
+// Configure STUN/TURN servers for WebRTC
 const rtcConfig = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" }
+    { urls: "stun:stun1.l.google.com:19302" },
+    { 
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject"
+    },
+    { 
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject"
+    }
   ]
 };
 
