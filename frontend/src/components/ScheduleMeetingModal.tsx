@@ -18,6 +18,22 @@ export default function ScheduleMeetingModal({ isOpen, onClose, onSuccess }: Sch
   const [duration, setDuration] = useState(60);
   const [error, setError] = useState("");
 
+  // Generate time options from 00:00 to 23:30 in 30-min intervals
+  const timeOptions = [];
+  for (let i = 0; i < 24; i++) {
+    for (let j = 0; j < 60; j += 30) {
+      const hour = i.toString().padStart(2, '0');
+      const min = j.toString().padStart(2, '0');
+      const time24 = `${hour}:${min}`;
+      
+      const ampm = i >= 12 ? 'PM' : 'AM';
+      const hour12 = i === 0 ? 12 : i > 12 ? i - 12 : i;
+      const time12 = `${hour12.toString().padStart(2, '0')}:${min} ${ampm}`;
+      
+      timeOptions.push({ value: time24, label: time12 });
+    }
+  }
+
   if (!isOpen) return null;
 
   const handleSchedule = async (e: React.FormEvent) => {
@@ -100,12 +116,16 @@ export default function ScheduleMeetingModal({ isOpen, onClose, onSuccess }: Sch
               </div>
               <div>
                 <label className="block text-xs font-semibold tracking-wider text-gray-400 uppercase mb-2">Time</label>
-                <input
-                  type="time"
+                <select
                   value={time}
                   onChange={(e) => { setTime(e.target.value); setError(""); }}
-                  className="w-full bg-[#0a0d14] text-white px-4 py-3 rounded-xl border border-[var(--color-border)] focus:border-blue-500 focus:outline-none transition-colors"
-                />
+                  className="w-full bg-[#0a0d14] text-white px-4 py-3 rounded-xl border border-[var(--color-border)] focus:border-blue-500 focus:outline-none transition-colors appearance-none"
+                >
+                  <option value="" disabled>Select time</option>
+                  {timeOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
