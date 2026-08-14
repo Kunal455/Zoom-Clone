@@ -11,7 +11,12 @@ export default function Contacts() {
     fetch(process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/users` : "http://localhost:8000/api/users")
       .then(res => res.json())
       .then(data => {
-        setContacts(data);
+        if (Array.isArray(data)) {
+          setContacts(data);
+        } else {
+          console.error("Expected array from /users API, got:", data);
+          setContacts([]);
+        }
         setLoading(false);
       })
       .catch(err => {
@@ -21,6 +26,7 @@ export default function Contacts() {
   }, []);
 
   const getColor = (str: string) => {
+    if (!str) return "bg-gray-600";
     const colors = ["bg-blue-600", "bg-indigo-600", "bg-purple-600", "bg-pink-600", "bg-teal-600", "bg-orange-600"];
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
