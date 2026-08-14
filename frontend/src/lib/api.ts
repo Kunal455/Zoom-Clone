@@ -46,4 +46,19 @@ export const getMeetings = async () => {
   return response.data;
 };
 
+export const getContacts = async () => {
+  const response = await api.get('/contacts');
+  return response.data;
+};
+
+export const searchUsers = async (query: string) => {
+  const response = await api.get(`/users/search?q=${encodeURIComponent(query)}`);
+  return response.data;
+};
+
+export const addContact = async (contact_user_id: string) => {
+  const response = await api.post('/contacts', { contact_user_id });
+  return response.data;
+};
+
 export default api;

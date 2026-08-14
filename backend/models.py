@@ -25,3 +25,11 @@ class Meeting(Base):
     is_instant = Column(Boolean, default=False)
     status = Column(String, default="upcoming") # upcoming, active, completed
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+class Contact(Base):
+    __tablename__ = "contacts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, index=True) # The user who owns this contact
+    contact_user_id = Column(String, index=True) # The user who is the contact
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

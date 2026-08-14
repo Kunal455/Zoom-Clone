@@ -42,3 +42,15 @@ class MeetingResponse(MeetingBase):
 
     class Config:
         from_attributes = True
+
+class ContactAdd(BaseModel):
+    contact_user_id: str
+
+class ContactResponse(BaseModel):
+    id: int
+    user_id: str
+    contact_user_id: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

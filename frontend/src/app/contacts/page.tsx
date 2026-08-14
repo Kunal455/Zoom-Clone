@@ -2,27 +2,35 @@
 
 import { Users, Search, Video, ArrowUpRight, MoreVertical, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { getContacts } from "@/lib/api";
+import AddContactModal from "@/components/AddContactModal";
 
 export default function Contacts() {
   const [contacts, setContacts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  const fetchContacts = async () => {
+    setLoading(true);
+    try {
+      const data = await getContacts();
+      if (Array.isArray(data)) {
+        setContacts(data);
+      } else {
+        console.error("Expected array from /contacts API, got:", data);
+        setContacts([]);
+      }
+    } catch (err) {
+      console.error("Failed to load contacts", err);
+      setContacts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetch(process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/users` : "http://localhost:8000/api/users")
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setContacts(data);
-        } else {
-          console.error("Expected array from /users API, got:", data);
-          setContacts([]);
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to load contacts", err);
-        setLoading(false);
-      });
+    fetchContacts();
   }, []);
 
   const getColor = (str: string) => {
@@ -47,7 +55,10 @@ export default function Contacts() {
           <Users className="w-7 h-7 text-gray-200" />
           <h1 className="text-[28px] font-bold text-gray-200">Contacts</h1>
         </div>
-        <button className="bg-blue-500 hover:bg-blue-400 text-white font-medium px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-blue-500/20 text-sm">
+        <button 
+          onClick={() => setIsAddModalOpen(true)}
+          className="bg-blue-500 hover:bg-blue-400 text-white font-medium px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-blue-500/20 text-sm"
+        >
           Add Contact
         </button>
       </div>
@@ -115,6 +126,12 @@ export default function Contacts() {
           ))
         )}
       </div>
+
+      <AddContactModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onSuccess={fetchContacts} 
+      />
     </div>
   );
 }
