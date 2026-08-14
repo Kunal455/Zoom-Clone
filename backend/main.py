@@ -225,6 +225,20 @@ def get_contacts(db: Session = Depends(get_db), current_user: models.User = Depe
     users = db.query(models.User).filter(models.User.user_id.in_(contact_user_ids)).all()
     return users
 
+@app.delete("/api/contacts/{contact_user_id}")
+def delete_contact(contact_user_id: str, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    contact = db.query(models.Contact).filter(
+        models.Contact.user_id == current_user.user_id,
+        models.Contact.contact_user_id == contact_user_id
+    ).first()
+    
+    if not contact:
+        raise HTTPException(status_code=404, detail="Contact not found")
+        
+    db.delete(contact)
+    db.commit()
+    return {"status": "success", "message": "Contact removed"}
+
 @app.post("/api/users/profile", response_model=schemas.UserResponse)
 async def update_profile(
     name: str = Form(...),

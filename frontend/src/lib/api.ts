@@ -61,4 +61,9 @@ export const addContact = async (contact_user_id: string) => {
   return response.data;
 };
 
+export const removeContact = async (contact_user_id: string) => {
+  const response = await api.delete(`/contacts/${contact_user_id}`);
+  return response.data;
+};
+
 export default api;

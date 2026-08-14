@@ -2,10 +2,12 @@
 
 import { Users, Search, Video, ArrowUpRight, MoreVertical, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { getContacts } from "@/lib/api";
+import { getContacts, removeContact, createMeeting } from "@/lib/api";
 import AddContactModal from "@/components/AddContactModal";
+import { useRouter } from "next/navigation";
 
 export default function Contacts() {
+  const router = useRouter();
   const [contacts, setContacts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,6 +48,33 @@ export default function Contacts() {
   const getInitials = (name: string) => {
     if (!name) return "??";
     return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+  };
+
+  const handleVideoCall = async (contactName: string) => {
+    try {
+      // Create an instant meeting
+      const meeting = await createMeeting(`Meeting with ${contactName || "Contact"}`, 60, true);
+      router.push(`/meeting/${meeting.meeting_id}`);
+    } catch (err) {
+      console.error("Failed to start meeting", err);
+      alert("Failed to start meeting");
+    }
+  };
+
+  const handleRemoveContact = async (userId: string) => {
+    if (confirm("Are you sure you want to remove this contact?")) {
+      try {
+        await removeContact(userId);
+        fetchContacts(); // Refresh the list
+      } catch (err) {
+        console.error("Failed to remove contact", err);
+        alert("Failed to remove contact");
+      }
+    }
+  };
+
+  const handleViewProfile = () => {
+    alert("Profile page coming soon!");
   };
 
   return (
@@ -112,13 +141,25 @@ export default function Contacts() {
               </div>
               
               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button className="w-10 h-10 rounded-full bg-[#1a202c] hover:bg-[#252f3f] flex items-center justify-center text-gray-300 transition-colors border border-gray-800">
+                <button 
+                  onClick={() => handleVideoCall(contact.name)}
+                  title="Video Call"
+                  className="w-10 h-10 rounded-full bg-[#1a202c] hover:bg-blue-600 flex items-center justify-center text-gray-300 hover:text-white transition-colors border border-gray-800 hover:border-transparent"
+                >
                   <Video className="w-4 h-4" />
                 </button>
-                <button className="w-10 h-10 rounded-full bg-[#1a202c] hover:bg-[#252f3f] flex items-center justify-center text-gray-300 transition-colors border border-gray-800">
+                <button 
+                  onClick={handleViewProfile}
+                  title="View Profile"
+                  className="w-10 h-10 rounded-full bg-[#1a202c] hover:bg-[#252f3f] flex items-center justify-center text-gray-300 transition-colors border border-gray-800"
+                >
                   <ArrowUpRight className="w-4 h-4" />
                 </button>
-                <button className="w-10 h-10 rounded-full bg-[#1a202c] hover:bg-[#252f3f] flex items-center justify-center text-gray-300 transition-colors border border-gray-800">
+                <button 
+                  onClick={() => handleRemoveContact(contact.user_id)}
+                  title="Remove Contact"
+                  className="w-10 h-10 rounded-full bg-[#1a202c] hover:bg-red-600 flex items-center justify-center text-gray-300 hover:text-white transition-colors border border-gray-800 hover:border-transparent"
+                >
                   <MoreVertical className="w-4 h-4" />
                 </button>
               </div>
