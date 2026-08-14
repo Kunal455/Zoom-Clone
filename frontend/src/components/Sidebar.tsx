@@ -8,7 +8,6 @@ const navItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Meetings", href: "/meetings", icon: Video },
   { name: "Contacts", href: "/contacts", icon: Users },
-  { name: "Recordings", href: "/recordings", icon: History },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 

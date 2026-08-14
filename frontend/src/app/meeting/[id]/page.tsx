@@ -41,6 +41,11 @@ function MeetingRoomContent() {
   // Use a stable, random user ID for this tab session
   const [userId] = useState(() => Math.random().toString(36).substring(2, 10));
 
+  const nameRef = useRef(name);
+  useEffect(() => {
+    nameRef.current = name;
+  }, [name]);
+
   const [isMicOn, setIsMicOn] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(false);
   const [activePanel, setActivePanel] = useState<'none' | 'chat'>('none');
@@ -120,7 +125,7 @@ function MeetingRoomContent() {
             type: "toggle-media",
             media: "video",
             state: false,
-            name: name
+            name: nameRef.current
           }));
         };
 
@@ -129,8 +134,8 @@ function MeetingRoomContent() {
           
           if (data.type === "user-joined") {
             const newUserId = data.userId;
-            createPeerConnection(newUserId, stream, true);
-          } 
+            createPeerConnection(newUserId, stream, true, isMicOn, isVideoOn);
+          }
           else if (data.type === "offer") {
             await handleOffer(data, stream);
           } 
@@ -177,11 +182,11 @@ function MeetingRoomContent() {
       if (ws) ws.close();
       Object.values(peersRef.current).forEach(peer => peer.close());
     };
-  }, [id, userId, name]);
+  }, [id, userId]);
 
 
   // WebRTC Helper Functions
-  const createPeerConnection = async (targetUserId: string, currentStream: MediaStream, isInitiator: boolean) => {
+  const createPeerConnection = async (targetUserId: string, currentStream: MediaStream, isInitiator: boolean, currentMicOn = false, currentVideoOn = false) => {
     const peer = new RTCPeerConnection(rtcConfig);
     peersRef.current[targetUserId] = peer;
 
@@ -216,7 +221,9 @@ function MeetingRoomContent() {
         type: "offer",
         target: targetUserId,
         data: offer,
-        name: name
+        name: nameRef.current,
+        isMicOn: isMicOn,
+        isVideoOn: isVideoOn
       }));
     }
 
@@ -248,16 +255,21 @@ function MeetingRoomContent() {
       type: "answer",
       target: targetUserId,
       data: answer,
-      name: name
+      name: nameRef.current,
+      isMicOn: isMicOn,
+      isVideoOn: isVideoOn
     }));
 
-    // Save participant name
-    if (data.name) {
-      setParticipants(prev => ({
-        ...prev,
-        [targetUserId]: { ...prev[targetUserId], name: data.name }
-      }));
-    }
+    // Save participant name and media state
+    setParticipants(prev => ({
+      ...prev,
+      [targetUserId]: { 
+        ...prev[targetUserId], 
+        name: data.name || prev[targetUserId]?.name,
+        isMicOn: data.isMicOn ?? prev[targetUserId]?.isMicOn ?? false,
+        isVideoOn: data.isVideoOn ?? prev[targetUserId]?.isVideoOn ?? false
+      }
+    }));
   };
 
   const handleAnswer = async (data: any) => {
@@ -278,12 +290,16 @@ function MeetingRoomContent() {
         pendingCandidates.current[targetUserId] = [];
       }
     }
-    if (data.name) {
-      setParticipants(prev => ({
-        ...prev,
-        [data.sender]: { ...prev[data.sender], name: data.name }
-      }));
-    }
+    // Save participant name and media state
+    setParticipants(prev => ({
+      ...prev,
+      [data.sender]: { 
+        ...prev[data.sender], 
+        name: data.name || prev[data.sender]?.name,
+        isMicOn: data.isMicOn ?? prev[data.sender]?.isMicOn ?? false,
+        isVideoOn: data.isVideoOn ?? prev[data.sender]?.isVideoOn ?? false
+      }
+    }));
   };
 
   const handleIceCandidate = async (data: any) => {
@@ -537,10 +553,6 @@ function MeetingRoomContent() {
           {!isVideoOn ? <VideoOff className="w-5 h-5" /> : <VideoIcon className="w-5 h-5" />}
         </button>
 
-        <button className="flex items-center justify-center w-12 h-12 rounded-full bg-[#1A1D24] hover:bg-[#252830] text-gray-300 transition-colors border border-gray-700">
-          <MonitorUp className="w-5 h-5" />
-        </button>
-
         <button 
           onClick={() => setActivePanel(activePanel === 'chat' ? 'none' : 'chat')}
           className={`flex items-center justify-center w-12 h-12 rounded-full transition-colors border ${
@@ -548,10 +560,6 @@ function MeetingRoomContent() {
           }`}
         >
           <MessageSquare className="w-5 h-5" />
-        </button>
-
-        <button className="flex items-center justify-center w-12 h-12 rounded-full bg-[#1A1D24] hover:bg-[#252830] text-gray-300 transition-colors border border-gray-700">
-          <MoreVertical className="w-5 h-5" />
         </button>
 
         <div className="w-px h-8 bg-gray-800 mx-2"></div>

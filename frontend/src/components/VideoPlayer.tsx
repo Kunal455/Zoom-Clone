@@ -15,27 +15,27 @@ export function VideoPlayer({ stream, isLocal = false, name, isMicOn, isVideoOn 
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (videoRef.current && stream && isVideoOn) {
+    if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
     }
-  }, [stream, isVideoOn]);
+  }, [stream]);
 
   const initials = name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
 
   return (
     <div className="bg-[#12151C] rounded-2xl border border-gray-800 overflow-hidden relative group flex items-center justify-center shadow-lg w-full h-full">
-      {/* Video Element */}
-      {isVideoOn && stream ? (
-        <video 
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted={isLocal}
-          className={`w-full h-full object-cover ${isLocal ? 'scale-x-[-1]' : ''}`}
-        />
-      ) : (
-        /* Fallback Avatar */
-        <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-gray-700 bg-gray-800 flex items-center justify-center">
+      {/* Video Element (Always rendered to preserve audio, hidden if video off) */}
+      <video 
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted={isLocal}
+        className={`w-full h-full object-cover ${isLocal ? 'scale-x-[-1]' : ''} ${!isVideoOn || !stream ? 'hidden' : 'block'}`}
+      />
+
+      {/* Fallback Avatar */}
+      {(!isVideoOn || !stream) && (
+        <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-gray-700 bg-gray-800 flex items-center justify-center absolute z-10">
           <span className="text-3xl font-semibold text-white">{initials || "??"}</span>
         </div>
       )}

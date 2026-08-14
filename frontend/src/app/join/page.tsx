@@ -66,15 +66,18 @@ function JoinMeetingContent() {
               <div className="relative">
                 <input
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={meetingId}
                   onChange={(e) => {
-                    setMeetingId(e.target.value);
+                    const onlyNums = e.target.value.replace(/[^0-9]/g, '');
+                    setMeetingId(onlyNums);
                     if (error) setError(false);
                   }}
                   className={`w-full bg-[#1a202c] text-white px-4 py-3 rounded-xl border ${
                     error ? "border-red-500 focus:border-red-500" : "border-transparent focus:border-blue-500"
                   } focus:outline-none transition-colors pr-10`}
-                  placeholder="e.g. MF-123-456-789"
+                  placeholder="e.g. 123456789"
                 />
                 {error && (
                   <AlertCircle className="w-5 h-5 text-red-500 absolute right-3 top-1/2 -translate-y-1/2" />

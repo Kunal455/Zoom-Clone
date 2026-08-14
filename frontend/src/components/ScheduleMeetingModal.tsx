@@ -16,12 +16,26 @@ export default function ScheduleMeetingModal({ isOpen, onClose, onSuccess }: Sch
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [duration, setDuration] = useState(60);
+  const [error, setError] = useState("");
 
   if (!isOpen) return null;
 
   const handleSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !date || !time) return;
+    setError("");
+    
+    if (!title) {
+      setError("Please enter a meeting topic.");
+      return;
+    }
+    if (!date) {
+      setError("Please select a date.");
+      return;
+    }
+    if (!time) {
+      setError("Please select a valid time. Make sure you have filled out the AM/PM part if you are on a 12-hour clock.");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -66,8 +80,7 @@ export default function ScheduleMeetingModal({ isOpen, onClose, onSuccess }: Sch
                 <input
                   type="text"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
+                  onChange={(e) => { setTitle(e.target.value); setError(""); }}
                   placeholder="E.g. Weekly Sync"
                   className="w-full bg-[#0a0d14] text-white pl-11 pr-4 py-3 rounded-xl border border-[var(--color-border)] focus:border-blue-500 focus:outline-none transition-colors"
                 />
@@ -81,8 +94,7 @@ export default function ScheduleMeetingModal({ isOpen, onClose, onSuccess }: Sch
                 <input
                   type="date"
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
+                  onChange={(e) => { setDate(e.target.value); setError(""); }}
                   className="w-full bg-[#0a0d14] text-white px-4 py-3 rounded-xl border border-[var(--color-border)] focus:border-blue-500 focus:outline-none transition-colors"
                 />
               </div>
@@ -91,8 +103,7 @@ export default function ScheduleMeetingModal({ isOpen, onClose, onSuccess }: Sch
                 <input
                   type="time"
                   value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  required
+                  onChange={(e) => { setTime(e.target.value); setError(""); }}
                   className="w-full bg-[#0a0d14] text-white px-4 py-3 rounded-xl border border-[var(--color-border)] focus:border-blue-500 focus:outline-none transition-colors"
                 />
               </div>
@@ -114,6 +125,12 @@ export default function ScheduleMeetingModal({ isOpen, onClose, onSuccess }: Sch
               </select>
             </div>
 
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm p-3 rounded-xl flex items-start gap-2">
+                <span className="font-semibold text-red-500 block">!</span> {error}
+              </div>
+            )}
+
             <div className="pt-4 flex items-center justify-between gap-4">
               <button 
                 type="button"
@@ -124,7 +141,7 @@ export default function ScheduleMeetingModal({ isOpen, onClose, onSuccess }: Sch
               </button>
               <button 
                 type="submit"
-                disabled={loading || !title || !date || !time}
+                disabled={loading}
                 className="flex-1 py-3 px-4 rounded-xl font-medium text-white bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 transition-colors shadow-lg shadow-blue-500/20 flex justify-center items-center"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Schedule"}

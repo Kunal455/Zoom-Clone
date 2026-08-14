@@ -70,7 +70,7 @@ export default function NewMeetingModal({ isOpen, onClose }: NewMeetingModalProp
             <div>
               <label className="block text-xs font-semibold tracking-wider text-gray-400 uppercase mb-2">Meeting ID</label>
               <div className="bg-[#0a0d14] border border-[var(--color-border)] rounded-xl px-4 py-3 flex items-center min-h-[52px]">
-                {loading ? <Loader2 className="w-5 h-5 text-blue-500 animate-spin" /> : <span className="text-white font-mono text-lg tracking-wider">MF-{meetingId.slice(0,3)}-{meetingId.slice(3,6)}-{meetingId.slice(6)}</span>}
+                {loading ? <Loader2 className="w-5 h-5 text-blue-500 animate-spin" /> : <span className="text-white font-mono text-lg tracking-wider">{meetingId.slice(0,3)} {meetingId.slice(3,6)} {meetingId.slice(6)}</span>}
               </div>
             </div>
 
